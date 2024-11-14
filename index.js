@@ -1,16 +1,15 @@
-import "dotenv/config";
 import express from "express";
-import cors from "cors";
+import warehouseRouter from "./routes/warehouse.js";
 
 const app = express();
-app.use(cors());
-const PORT = process.env.PORT || 8080;
-
 app.use(express.json());
 
 
+// Register the route with the correct path
+app.use("/warehouses", warehouseRouter);
 
 
-app.listen(PORT, () => {
-  console.log(`running at http://localhost:${PORT}`);
+// Start the server
+app.listen(8080, () => {
+  console.log("Server is running on http://localhost:8080");
 });
