@@ -103,7 +103,7 @@ const add = async (req, res) => {
 };
 
 // Update an existing inventory item
-// PATCH - http://localhost:8080/inventory/:id
+// PUT - http://localhost:8080/inventory/:id
 const update = async (req, res) => {
   const { item_name, category, status, quantity, warehouse_id } = req.body;
 
