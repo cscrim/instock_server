@@ -2,6 +2,7 @@ import express from "express";
 import "dotenv/config";
 import cors from "cors";
 import warehouseRouter from "./routes/warehouse.js";
+import inventoryRouter from "./routes/inventories.js";
 
 const { PORT, BACKEND_URL, CORS_ORIGIN } = process.env;
 
@@ -13,6 +14,9 @@ app.use(express.json());
 
 // Register the route with the correct path
 app.use("/warehouses", warehouseRouter);
+
+// Register the route with the correct path
+app.use("/inventory", inventoryRouter);
 
 // Start the server
 app.listen(PORT, () => {
