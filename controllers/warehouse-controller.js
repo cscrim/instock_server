@@ -145,7 +145,7 @@ const remove = async (req, res) => {
   }
 };
 
-// Get inventory items for a specific warehouse
+// // Get inventory items for a specific warehouse
 const getInventoryByWarehouse = async (req, res) => {
   const { id } = req.params; // Warehouse ID from the URL
 

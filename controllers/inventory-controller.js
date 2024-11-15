@@ -60,27 +60,48 @@ const findOne = async (req, res) => {
   }
 };
 
-// Add a new inventory item
-// POST - http://localhost:8080/inventory
+// // Add a new inventory item
+// // POST - http://localhost:8080/inventory
 const add = async (req, res) => {
-  const { item_name, category, status, quantity, warehouse_id } = req.body;
+  const { item_name, description, category, status, quantity, warehouse_id } =
+    req.body;
 
+  // Validate required fields
   if (
     !item_name ||
+    !description ||
     !category ||
     !status ||
-    quantity === undefined ||
-    !warehouse_id
+    warehouse_id === undefined
   ) {
-    return res.status(400).json({ message: "Required fields are missing" });
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  // Validate status and quantity logic
+  if (status === "In Stock" && (quantity === undefined || quantity < 0)) {
+    return res.status(400).json({
+      message: "Quantity must be a non-negative number for 'In Stock' items.",
+    });
+  }
+  if (status === "Out of Stock" && quantity !== 0) {
+    return res
+      .status(400)
+      .json({ message: "Quantity must be 0 for 'Out of Stock' items." });
   }
 
   try {
-    const [newItemId] = await knex("inventories").insert(req.body);
-    const newItem = await knex("inventories").where({ id: newItemId }).first();
+    // Insert new inventory item
+    const [newItemId] = await knex("inventories").insert({
+      item_name,
+      description,
+      category,
+      status,
+      quantity,
+      warehouse_id,
+    });
 
-    // After inserting, return the new item with the warehouse name
-    const result = await knex("inventories")
+    // Fetch the newly created item along with its warehouse name
+    const newItem = await knex("inventories")
       .join("warehouses", "inventories.warehouse_id", "=", "warehouses.id")
       .where({ "inventories.id": newItemId })
       .select(
@@ -96,9 +117,11 @@ const add = async (req, res) => {
       )
       .first();
 
-    res.status(201).json(result);
+    res.status(201).json(newItem);
   } catch (error) {
-    res.status(500).json({ message: `Unable to add inventory item: ${error}` });
+    res
+      .status(500)
+      .json({ message: `Unable to add inventory item: ${error.message}` });
   }
 };
 
@@ -173,7 +196,6 @@ const remove = async (req, res) => {
       .json({ message: `Unable to delete inventory item: ${error}` });
   }
 };
-
 
 const getCategories = async (_req, res) => {
   try {
