@@ -68,6 +68,7 @@ const add = async (req, res) => {
 // Update an existing warehouse
 //http://localhost:8080/warehouses/:id PATCH
 const update = async (req, res) => {
+  const { id } = req.params; // Get warehouse ID from URL params
   const {
     warehouse_name,
     address,
@@ -79,49 +80,29 @@ const update = async (req, res) => {
     contact_email,
   } = req.body;
 
-  // Validate required fields
-  if (
-    !warehouse_name ||
-    !address ||
-    !city ||
-    !country ||
-    !contact_name ||
-    !contact_position ||
-    !contact_phone ||
-    !contact_email
-  ) {
-    return res.status(400).json({ message: "Required fields are missing" });
-  }
-
-  // Validate phone number and email formats
-  const phoneRegex =
-    /^\+?(\d{1,3})?[-.\s]?(\(\d{1,3}\)|\d{1,3})[-.\s]?\d{3}[-.\s]?\d{4}$/;
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!phoneRegex.test(contact_phone)) {
-    return res.status(400).json({ message: "Invalid phone number format" });
-  }
-  if (!emailRegex.test(contact_email)) {
-    return res.status(400).json({ message: "Invalid email format" });
-  }
+  // Remove 'updated_at' from the request body to avoid the invalid format issue
+  const { updated_at, ...updatedData } = req.body;
 
   try {
+    // Perform the update (no need to manually manage 'updated_at')
     const rowsUpdated = await knex("warehouses")
-      .where({ id: req.params.id })
-      .update(req.body);
+      .where({ id })
+      .update(updatedData);
 
+    // If no rows were updated, return a 404 not found error
     if (rowsUpdated === 0) {
-      return res
-        .status(404)
-        .json({ message: `Warehouse with ID ${req.params.id} not found` });
+      return res.status(404).json({
+        message: `Warehouse with ID ${id} not found`,
+      });
     }
 
-    const updatedWarehouse = await knex("warehouses")
-      .where({ id: req.params.id })
-      .first();
-    res.status(200).json(updatedWarehouse);
+    // Fetch the updated warehouse data and return it
+    const updatedWarehouse = await knex("warehouses").where({ id }).first();
+    res.status(200).json(updatedWarehouse); // Send back the updated warehouse details
   } catch (error) {
-    res.status(500).json({ message: `Unable to update warehouse: ${error}` });
+    res.status(500).json({
+      message: `Unable to update warehouse: ${error}`, // Handle and return any errors
+    });
   }
 };
 
