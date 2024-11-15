@@ -145,4 +145,35 @@ const remove = async (req, res) => {
   }
 };
 
-export { index, findOne, add, update, remove };
+// Get inventory items for a specific warehouse
+const getInventoryByWarehouse = async (req, res) => {
+  const { id } = req.params; // Warehouse ID from the URL
+
+  try {
+    const inventory = await knex("inventories")
+      .where({ warehouse_id: id }) // Match inventory items by warehouse_id
+      .select(
+        "id",
+        "item_name",
+        "category",
+        "status",
+        "quantity",
+        "created_at",
+        "updated_at"
+      );
+
+    if (inventory.length === 0) {
+      return res
+        .status(404)
+        .json({ message: `No inventory found for warehouse ID ${id}` });
+    }
+
+    res.status(200).json(inventory);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: `Error retrieving inventory: ${error.message}` });
+  }
+};
+
+export { index, findOne, add, update, remove, getInventoryByWarehouse };
