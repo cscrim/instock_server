@@ -16,7 +16,7 @@ app.use(express.json());
 app.use("/warehouses", warehouseRouter);
 
 // Register the route with the correct path
-app.use("/inventories", inventoryRouter);
+app.use("/inventory", inventoryRouter);
 
 // Start the server
 app.listen(PORT, () => {

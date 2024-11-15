@@ -1,23 +1,171 @@
+// import initKnex from "knex";
+// import configuration from "../knexfile.js";
+// const knex = initKnex(configuration);
+
+// // Get all inventory items
+// // POSTMAN test - http://localhost:8080/inventory
+// const index = async (_req, res) => {
+//   try {
+//     const inventory = await knex("inventories");
+//     res.status(200).json(inventory);
+//   } catch (error) {
+//     res.status(500).send(`Error retrieving inventory items: ${error}`);
+//   }
+// };
+
+// // Get a single inventory item by ID
+// // POSTMAN test - http://localhost:8080/inventory/:id
+// const findOne = async (req, res) => {
+//   try {
+//     const item = await knex("inventories").where({ id: req.params.id }).first();
+
+//     if (!item) {
+//       return res
+//         .status(404)
+//         .json({ message: `Inventory item with ID ${req.params.id} not found` });
+//     }
+
+//     res.status(200).json(item);
+//   } catch (error) {
+//     res
+//       .status(500)
+//       .json({ message: `Unable to retrieve inventory item: ${error}` });
+//   }
+// };
+
+// // Add a new inventory item
+// // POST - http://localhost:8080/inventory
+// const add = async (req, res) => {
+//   const { item_name, category, status, quantity, warehouse_id } = req.body;
+
+//   if (
+//     !item_name ||
+//     !category ||
+//     !status ||
+//     quantity === undefined ||
+//     !warehouse_id
+//   ) {
+//     return res.status(400).json({ message: "Required fields are missing" });
+//   }
+
+//   try {
+//     const [newItemId] = await knex("inventories").insert(req.body);
+//     const newItem = await knex("inventories").where({ id: newItemId }).first();
+
+//     res.status(201).json(newItem);
+//   } catch (error) {
+//     res.status(500).json({ message: `Unable to add inventory item: ${error}` });
+//   }
+// };
+
+// // Update an existing inventory item
+// // PATCH - http://localhost:8080/inventory/:id
+// const update = async (req, res) => {
+//   const { item_name, category, status, quantity, warehouse_id } = req.body;
+
+//   if (
+//     !item_name ||
+//     !category ||
+//     !status ||
+//     quantity === undefined ||
+//     !warehouse_id
+//   ) {
+//     return res.status(400).json({ message: "Required fields are missing" });
+//   }
+
+//   try {
+//     const rowsUpdated = await knex("inventories")
+//       .where({ id: req.params.id })
+//       .update(req.body);
+
+//     if (rowsUpdated === 0) {
+//       return res
+//         .status(404)
+//         .json({ message: `Inventory item with ID ${req.params.id} not found` });
+//     }
+
+//     const updatedItem = await knex("inventories")
+//       .where({ id: req.params.id })
+//       .first();
+//     res.status(200).json(updatedItem);
+//   } catch (error) {
+//     res
+//       .status(500)
+//       .json({ message: `Unable to update inventory item: ${error}` });
+//   }
+// };
+
+// // Delete an inventory item
+// // DELETE - http://localhost:8080/inventory/:id
+// const remove = async (req, res) => {
+//   try {
+//     const rowsDeleted = await knex("inventories")
+//       .where({ id: req.params.id })
+//       .delete();
+
+//     if (rowsDeleted === 0) {
+//       return res
+//         .status(404)
+//         .json({ message: `Inventory item with ID ${req.params.id} not found` });
+//     }
+
+//     res.sendStatus(204); // No Content
+//   } catch (error) {
+//     res
+//       .status(500)
+//       .json({ message: `Unable to delete inventories item: ${error}` });
+//   }
+// };
+
+// export { index, findOne, add, update, remove };
+
 import initKnex from "knex";
 import configuration from "../knexfile.js";
 const knex = initKnex(configuration);
 
-// Get all inventory items
+// Get all inventory items with warehouse names
 // POSTMAN test - http://localhost:8080/inventory
 const index = async (_req, res) => {
   try {
-    const inventory = await knex("inventory");
+    const inventory = await knex("inventories")
+      .join("warehouses", "inventories.warehouse_id", "=", "warehouses.id") // Join with the warehouses table
+      .select(
+        "inventories.id",
+        "inventories.item_name",
+        "inventories.description",
+        "inventories.category",
+        "inventories.status",
+        "inventories.quantity",
+        "inventories.created_at",
+        "inventories.updated_at",
+        "warehouses.warehouse_name" // Select the warehouse name as well
+      );
+
     res.status(200).json(inventory);
   } catch (error) {
     res.status(500).send(`Error retrieving inventory items: ${error}`);
   }
 };
 
-// Get a single inventory item by ID
+// Get a single inventory item by ID with the corresponding warehouse name
 // POSTMAN test - http://localhost:8080/inventory/:id
 const findOne = async (req, res) => {
   try {
-    const item = await knex("inventory").where({ id: req.params.id }).first();
+    const item = await knex("inventories")
+      .join("warehouses", "inventories.warehouse_id", "=", "warehouses.id") // Join with the warehouses table
+      .where({ "inventories.id": req.params.id }) // Match by inventory ID
+      .select(
+        "inventories.id",
+        "inventories.item_name",
+        "inventories.description",
+        "inventories.category",
+        "inventories.status",
+        "inventories.quantity",
+        "inventories.created_at",
+        "inventories.updated_at",
+        "warehouses.warehouse_name" // Select warehouse name
+      )
+      .first(); // Fetch only the first (or only) item, since we are querying by ID
 
     if (!item) {
       return res
@@ -49,10 +197,27 @@ const add = async (req, res) => {
   }
 
   try {
-    const [newItemId] = await knex("inventory").insert(req.body);
-    const newItem = await knex("inventory").where({ id: newItemId }).first();
+    const [newItemId] = await knex("inventories").insert(req.body);
+    const newItem = await knex("inventories").where({ id: newItemId }).first();
 
-    res.status(201).json(newItem);
+    // After inserting, return the new item with the warehouse name
+    const result = await knex("inventories")
+      .join("warehouses", "inventories.warehouse_id", "=", "warehouses.id")
+      .where({ "inventories.id": newItemId })
+      .select(
+        "inventories.id",
+        "inventories.item_name",
+        "inventories.description",
+        "inventories.category",
+        "inventories.status",
+        "inventories.quantity",
+        "inventories.created_at",
+        "inventories.updated_at",
+        "warehouses.warehouse_name"
+      )
+      .first();
+
+    res.status(201).json(result);
   } catch (error) {
     res.status(500).json({ message: `Unable to add inventory item: ${error}` });
   }
@@ -74,7 +239,7 @@ const update = async (req, res) => {
   }
 
   try {
-    const rowsUpdated = await knex("inventory")
+    const rowsUpdated = await knex("inventories")
       .where({ id: req.params.id })
       .update(req.body);
 
@@ -84,9 +249,22 @@ const update = async (req, res) => {
         .json({ message: `Inventory item with ID ${req.params.id} not found` });
     }
 
-    const updatedItem = await knex("inventory")
-      .where({ id: req.params.id })
+    const updatedItem = await knex("inventories")
+      .join("warehouses", "inventories.warehouse_id", "=", "warehouses.id")
+      .where({ "inventories.id": req.params.id })
+      .select(
+        "inventories.id",
+        "inventories.item_name",
+        "inventories.description",
+        "inventories.category",
+        "inventories.status",
+        "inventories.quantity",
+        "inventories.created_at",
+        "inventories.updated_at",
+        "warehouses.warehouse_name"
+      )
       .first();
+
     res.status(200).json(updatedItem);
   } catch (error) {
     res
@@ -99,7 +277,7 @@ const update = async (req, res) => {
 // DELETE - http://localhost:8080/inventory/:id
 const remove = async (req, res) => {
   try {
-    const rowsDeleted = await knex("inventory")
+    const rowsDeleted = await knex("inventories")
       .where({ id: req.params.id })
       .delete();
 
