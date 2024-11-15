@@ -3,6 +3,9 @@ import * as inventoryController from "../controllers/inventory-controller.js";
 
 const router = express.Router();
 
+
+router.get('/categories', inventoryController.getCategories);
+
 // Routes for "/inventories"
 router
   .route("/")
@@ -15,5 +18,7 @@ router
   .get(inventoryController.findOne) // Get a specific item by ID
   .put(inventoryController.update) // Update item by ID
   .delete(inventoryController.remove); // Delete item by ID
+
+ 
 
 export default router;

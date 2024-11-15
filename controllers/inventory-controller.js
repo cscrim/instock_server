@@ -135,7 +135,7 @@ const update = async (req, res) => {
         "inventories.id",
         "inventories.item_name",
         "inventories.description",
-        "inventories.category",
+        "categories.name as category",
         "inventories.status",
         "inventories.quantity",
         "inventories.created_at",
@@ -174,4 +174,18 @@ const remove = async (req, res) => {
   }
 };
 
-export { index, findOne, add, update, remove };
+
+const getCategories = async (_req, res) => {
+  try {
+    // Fetch distinct categories from the 'inventories' table
+    const categories = await knex("inventories")
+      .distinct("category") // Get distinct categories
+      .whereNotNull("category"); // Exclude rows with null categories
+
+    res.status(200).json(categories); // Return categories as JSON
+  } catch (error) {
+    res.status(500).send(`Error retrieving categories: ${error}`);
+  }
+};
+
+export { index, findOne, add, update, remove, getCategories };
