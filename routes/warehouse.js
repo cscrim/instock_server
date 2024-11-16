@@ -16,4 +16,7 @@ router
   .put(warehouseController.update) // Update warehouse by ID
   .delete(warehouseController.remove); // Delete warehouse by ID
 
+// New route to get inventory by warehouse
+router.route("/:id/inventory").get(warehouseController.getInventoryByWarehouse);
+
 export default router;
