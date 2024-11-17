@@ -106,7 +106,7 @@ const update = async (req, res) => {
   }
 
   try {
-    // Get the current date and time
+    //   current date and time
     const now = new Date();
 
     // Format date   "yyyy-MM-dd HH:mm:ss"
