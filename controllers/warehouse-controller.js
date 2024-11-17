@@ -106,10 +106,24 @@ const update = async (req, res) => {
   }
 
   try {
+    //   current date and time
+    const now = new Date();
+
+    // Format date   "yyyy-MM-dd HH:mm:ss"
+    const updatedAt = `${now.getFullYear()}-${String(
+      now.getMonth() + 1
+    ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(
+      now.getHours()
+    ).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(
+      now.getSeconds()
+    ).padStart(2, "0")}`;
+
     const rowsUpdated = await knex("warehouses")
       .where({ id: req.params.id })
-      .update(req.body);
-
+      .update({
+        ...req.body,
+        updated_at: updatedAt, // Replace with the formatted timestamp
+      });
     if (rowsUpdated === 0) {
       return res
         .status(404)
